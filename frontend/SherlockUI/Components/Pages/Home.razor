@@ -1,0 +1,106 @@
+@page "/"
+@rendermode InteractiveServer
+@using System.Net.Http.Json
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>Sherlock Holmes Q&A</PageTitle>
+
+<div class="container" style="max-width: 800px; margin-top: 2rem;">
+    <div class="text-center mb-4">
+        <h1 class="mt-3">Ask Sherlock</h1>
+        <p class="lead text-muted">RAG-powered Q&A over "The Adventures of Sherlock Holmes"</p>
+    </div>
+
+    <div class="input-group input-group-lg mb-3">
+        <input @bind="currentQuestion"
+               @bind:event="oninput"
+               @onkeyup="HandleKeyUp"
+               class="form-control"
+               placeholder="e.g., Where does Sherlock Holmes live?"
+               disabled="@isLoading" />
+        <button @onclick="AskQuestion" class="btn btn-primary" disabled="@isLoading">
+            @if (isLoading)
+            {
+                <span class="spinner-border spinner-border-sm"></span>
+                <span> Thinking...</span>
+            }
+            else
+            {
+                <span>Ask</span>
+            }
+        </button>
+    </div>
+
+    @if (apiResponse is not null)
+    {
+        <div class="card mt-4">
+            <div class="card-header fw-semibold">Answer</div>
+            <div class="card-body">
+                <p style="white-space: pre-wrap;">@apiResponse.Answer</p>
+            </div>
+            @if (apiResponse.Sources.Count > 0)
+            {
+                <div class="card-footer text-muted small">
+                    Sources: @string.Join(", ", apiResponse.Sources)
+                </div>
+            }
+        </div>
+    }
+
+    @if (errorText is not null)
+    {
+        <div class="alert alert-danger mt-4">@errorText</div>
+    }
+</div>
+
+@code {
+    private string? currentQuestion;
+    private QueryResponse? apiResponse;
+    private string? errorText;
+    private bool isLoading;
+
+    private sealed class QueryResponse
+    {
+        public string Answer { get; set; } = "";
+        public List<string> Sources { get; set; } = [];
+    }
+
+    private async Task AskQuestion()
+    {
+        if (string.IsNullOrWhiteSpace(currentQuestion) || isLoading) return;
+
+        isLoading = true;
+        apiResponse = null;
+        errorText = null;
+
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var response = await client.PostAsJsonAsync(
+                "http://localhost:8000/query",
+                new { Question = currentQuestion });
+
+            if (response.IsSuccessStatusCode)
+            {
+                apiResponse = await response.Content.ReadFromJsonAsync<QueryResponse>();
+            }
+            else
+            {
+                errorText = $"API error: {response.StatusCode} — {response.ReasonPhrase}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorText = $"Cannot reach the API. Is the Python backend running? ({ex.Message})";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await AskQuestion();
+    }
+}

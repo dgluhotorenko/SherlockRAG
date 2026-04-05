@@ -147,6 +147,10 @@ All backend settings are in `backend/.env` (copy from `.env.example`):
 - Describe the appearance of the visitor in "The Red-Headed League".
 - How did Holmes solve the mystery in "A Case of Identity"?
 
+## Result
+
+![Sherlock_RAG](https://github.com/user-attachments/assets/20d5b6d5-9f3f-4bc4-9b64-27657b732eca)
+
 ## License
 
 This is a personal learning project. The book text is in the public domain.

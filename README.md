@@ -149,7 +149,7 @@ All backend settings are in `backend/.env` (copy from `.env.example`):
 
 ## Result
 
-![Sherlock_RAG](https://github.com/user-attachments/assets/20d5b6d5-9f3f-4bc4-9b64-27657b732eca)
+![Sherlock_RAG](docs/sherlock-rag-demo.gif)
 
 ## License
 
